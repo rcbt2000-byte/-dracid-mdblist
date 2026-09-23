@@ -1,0 +1,22 @@
+{
+  "id": "com.rcbt2000.mdblist",
+  "version": "1.0.0",
+  "name": "MDBList New Releases",
+  "description": "Automatically updated movie catalog from MDBList.",
+  "resources": [
+    "catalog"
+  ],
+  "types": [
+    "movie"
+  ],
+  "idPrefixes": [
+    "tt"
+  ],
+  "catalogs": [
+    {
+      "id": "new-releases",
+      "type": "movie",
+      "name": "MDBList New Releases"
+    }
+  ]
+}
