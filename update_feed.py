@@ -6,7 +6,7 @@ import os
 
 FEED_URL = "https://mdblist.com/lists/rcbt2000/new-releases?rss=ydn1zcgqw7c1tjhxukhabpike"
 
-OUTPUT_FILE = "addon/catalog/movie/new-releases.json"
+OUTPUT_FILE = "catalog/movie/new-releases.json"
 
 
 def download_feed():
