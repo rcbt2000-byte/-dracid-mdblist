@@ -1,9 +1,7 @@
-import json
-import os
 import urllib.request
 
-# URL of the MDBList feed
-FEED_URL = "https://mdblist.com/lists/dracid77/latest"
+# MDBList RSS feed
+FEED_URL = "https://mdblist.com/lists/rcbt2000/new-releases?rss=ydn1zcgqw7c1tjhxukhabpike"
 
 # Output file used by the addon
 OUTPUT_FILE = "feed.json"
@@ -12,7 +10,9 @@ OUTPUT_FILE = "feed.json"
 def get_feed():
     request = urllib.request.Request(
         FEED_URL,
-        headers={"User-Agent": "Mozilla/5.0"}
+        headers={
+            "User-Agent": "Mozilla/5.0"
+        }
     )
 
     with urllib.request.urlopen(request) as response:
@@ -20,11 +20,10 @@ def get_feed():
 
 
 def main():
-    print("Downloading MDBList feed...")
+    print("Downloading MDBList RSS feed...")
 
     data = get_feed()
 
-    # Save the downloaded feed
     with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
         file.write(data)
 
