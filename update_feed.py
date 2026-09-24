@@ -1,102 +1,71 @@
 import urllib.request
-import xml.etree.ElementTree as ET
 import json
-import re
+import xml.etree.ElementTree as ET
+from email.utils import formatdate
 import os
 
-FEED_URL = "https://mdblist.com/lists/rcbt2000/new-releases?rss=ydn1zcgqw7c1tjhxukhabpike"
+SOURCE_URL = "https://raw.githubusercontent.com/Dracid77/lists/main/addon/catalog/movie/released-movies.json"
+OUTPUT_FILE = "feed.xml"
 
-OUTPUT_FILE = "catalog/movie/new-releases.json"
 
-
-def download_feed():
+def download_source():
     request = urllib.request.Request(
-        FEED_URL,
+        SOURCE_URL,
         headers={"User-Agent": "Mozilla/5.0"}
     )
 
     with urllib.request.urlopen(request) as response:
-        return response.read()
-
-
-def get_text(element, tag):
-    child = element.find(tag)
-    return child.text.strip() if child is not None and child.text else ""
-
-
-def extract_imdb(description):
-    match = re.search(
-        r"(?:imdb\.com/title/)(tt\d+)",
-        description,
-        re.IGNORECASE
-    )
-    return match.group(1) if match else ""
-
-
-def extract_poster(description):
-    match = re.search(
-        r'<img[^>]+src=["\']([^"\']+)["\']',
-        description,
-        re.IGNORECASE
-    )
-    return match.group(1) if match else ""
-
-
-def extract_year(title):
-    match = re.search(r"\((\d{4})\)\s*$", title)
-    return match.group(1) if match else ""
-
-
-def clean_title(title):
-    return re.sub(r"\s*\(\d{4}\)\s*$", "", title).strip()
+        return json.loads(response.read().decode("utf-8"))
 
 
 def main():
-    print("Downloading MDBList RSS feed...")
+    print("Downloading Dracid77 movie list...")
 
-    data = download_feed()
-    root = ET.fromstring(data)
+    data = download_source()
+    movies = data.get("metas", [])
 
-    metas = []
+    rss = ET.Element("rss", version="2.0")
+    channel = ET.SubElement(rss, "channel")
 
-    for item in root.findall("./channel/item"):
-        guid = get_text(item, "guid")
+    ET.SubElement(channel, "title").text = "Dracid77 Released Movies"
+    ET.SubElement(channel, "link").text = "https://github.com/Dracid77/lists"
+    ET.SubElement(channel, "description").text = "Automatically updated movie list from Dracid77"
 
-        # Only include movies
-        if guid and not guid.lower().startswith("movie:"):
+    now = formatdate(usegmt=True)
+
+    for movie in movies:
+        imdb_id = movie.get("id", "").strip()
+
+        if not imdb_id.startswith("tt"):
             continue
 
-        title = get_text(item, "title")
-        description = get_text(item, "description")
+        title = movie.get("name", "").strip()
+        year = str(movie.get("releaseInfo", "")).strip()
 
-        imdb_id = extract_imdb(description)
-
-        if not imdb_id:
-            continue
-
-        meta = {
-            "type": "movie",
-            "id": imdb_id,
-            "name": clean_title(title)
-        }
-
-        poster = extract_poster(description)
-        if poster:
-            meta["poster"] = poster
-
-        year = extract_year(title)
         if year:
-            meta["releaseInfo"] = year
+            display_title = f"{title} ({year})"
+        else:
+            display_title = title
 
-        metas.append(meta)
+        imdb_url = f"https://www.imdb.com/title/{imdb_id}/"
 
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+        item = ET.SubElement(channel, "item")
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
-        json.dump({"metas": metas}, file, ensure_ascii=False, separators=(",", ":"))
+        ET.SubElement(item, "title").text = display_title
+        ET.SubElement(item, "link").text = imdb_url
+        ET.SubElement(item, "guid", isPermaLink="false").text = imdb_id
+        ET.SubElement(item, "pubDate").text = now
+        ET.SubElement(item, "description").text = f"IMDb ID: {imdb_id}"
+
+    tree = ET.ElementTree(rss)
+    tree.write(
+        OUTPUT_FILE,
+        encoding="utf-8",
+        xml_declaration=True
+    )
 
     print(f"Created {OUTPUT_FILE}")
-    print(f"Movies found: {len(metas)}")
+    print(f"Movies found: {len(movies)}")
 
 
 if __name__ == "__main__":
