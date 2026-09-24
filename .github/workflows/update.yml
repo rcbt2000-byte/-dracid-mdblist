@@ -25,13 +25,13 @@ jobs:
       - name: Run update script
         run: python update_feed.py
 
-      - name: Commit updated catalog
+      - name: Commit updated feed
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add catalog/movie/new-releases.json
+          git add feed.xml
 
-          git diff --cached --quiet || git commit -m "Update MDBList catalog"
+          git diff --cached --quiet || git commit -m "Update Dracid77 movie feed"
 
           git push
